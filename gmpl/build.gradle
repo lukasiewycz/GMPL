@@ -1,0 +1,21 @@
+apply plugin: 'base'
+apply plugin: 'maven'
+
+version = '0.1'
+
+def descriptions = [
+	'gmpl-main' : 'The core module of GMPL'
+]
+
+allprojects {
+    group = 'io.github.gmpl'
+    
+    repositories {
+    	mavenCentral()
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'maven'
+}
