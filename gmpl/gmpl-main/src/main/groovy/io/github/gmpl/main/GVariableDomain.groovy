@@ -2,6 +2,10 @@ package io.github.gmpl.main
 
 class GVariableDomain {
 	
+	static {
+		GCommon.init()
+	}
+	
 	def name;
 	def type;
 	def domain;
@@ -24,10 +28,18 @@ class GVariableDomain {
 		}
 		
 		if(!map.containsKey(i)){
-			map[i] = new GVariable("${name}${i}", type)
+			map[i] = new GVariable(this,"${i}", type)
 		}
 		
 		return map[i]
 	}
+	
+	def retrieveAllDefinedVariables(){
+		def list = []
+		map.each{ k, v -> list.add(v) }
+		list
+	}
+	
+	
 
 }
