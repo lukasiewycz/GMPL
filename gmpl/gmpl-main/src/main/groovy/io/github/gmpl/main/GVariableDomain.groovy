@@ -19,19 +19,38 @@ class GVariableDomain {
 		this.domain = domain;
 	}
 	
-	GVariable getAt(i) {
+	Object getAt(i) {
 		assert i.size() == domain.size()
 		[domain, i].transpose().collect { 
-			if(!it[0].contains(it[1])){
+			if(!it[0].contains(it[1]) && it[1] != '_'){
 				throw new IllegalArgumentException("Illegal argument for domain ${name}, value ${it[1]} is not in domain ${it[0]}");
 			}
 		}
-		
-		if(!map.containsKey(i)){
-			map[i] = new GVariable(this,"${i}", type)
+
+		def wildcards = [] as List
+		for(def v=0; v<i.size; v++){
+			if(i[v] == '_'){
+				wildcards << v
+			}
 		}
-		
-		return map[i]
+
+		if(wildcards.isEmpty()){
+			if(!map.containsKey(i)){
+				map[i] = new GVariable(this,"${i}", type)
+			}
+
+			return map[i]
+		} else {
+			def result = [] as List
+
+			for(def v in domain[wildcards[0]]){
+				i[wildcards[0]] = v
+				result += getAt(i)
+			}
+			i[wildcards[0]] = '_'
+
+			return result
+		}
 	}
 	
 	def retrieveAllDefinedVariables(){
