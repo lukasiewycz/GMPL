@@ -12,7 +12,7 @@ class GVariableDomain {
 	def name
 	def domain
 	def type
-	def map = [:]
+	Map<List,GVariable> map = new HashMap<>()
 	
 	
 	public GVariableDomain(String name, Class type, List domain) {
@@ -24,11 +24,15 @@ class GVariableDomain {
 	
 	Object getAt(i) {
 		assert i.size() == domain.size()
+		List key = new ArrayList(i)
+
 		[domain, i].transpose().collect { 
 			if(!it[0].contains(it[1]) && it[1] != '_'){
 				throw new IllegalArgumentException("Illegal argument for domain ${name}, value ${it[1]} is not in domain ${it[0]}")
 			}
 		}
+
+
 
 		def wildcards = [] as List
 		for(def v=0; v<i.size; v++){
@@ -38,11 +42,11 @@ class GVariableDomain {
 		}
 
 		if(wildcards.isEmpty()){
-			if(!map.containsKey(i)){
-				map[i] = new GVariable(this,"${i}", type)
+			if(!map.containsKey(key)){
+				map[key] = new GVariable(this,"${i}", type)
 			}
 
-			return map[i]
+			return map[key]
 		} else {
 			def result = [] as List
 

@@ -98,9 +98,6 @@ class GSolverSAT4J extends GProblem implements GSolver {
 							throw new IllegalArgumentException()
 					}
 				}
-
-				//println cl
-
 				solver.addClause(cl);
 			}
 		}

@@ -57,6 +57,18 @@ class GDefaultFunctions {
         }
     }
 
+    def static disjunction(List list) {
+        if (list.isEmpty()) {
+            return false
+        } else {
+            def value = null;
+            for (def element in list) {
+                value = value == null ? element : value | element;
+            }
+            return value
+        }
+    }
+
     def static compare(GElement lhs, String c, GElement rhs) {
         new GCompare(lhs, c, rhs)
     }
