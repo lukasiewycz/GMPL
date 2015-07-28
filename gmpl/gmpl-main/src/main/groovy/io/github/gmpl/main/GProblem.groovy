@@ -58,4 +58,8 @@ class GProblem implements GFunctions {
 	def add(GProblem problem) {
 		constraints.addAll(problem.getConstraints())
 	}
+
+	static def testStaticMethod(){
+		println 'test successful'
+	}
 }
