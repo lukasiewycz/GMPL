@@ -15,7 +15,7 @@ trait GFunctions {
         sum
     }
 
-    def sum(List list) {
+    def static sum(List list) {
         if (list.isEmpty()) {
             return 0
         } else {
@@ -27,11 +27,23 @@ trait GFunctions {
         }
     }
 
-    static def compare(GElement lhs, String c, GElement rhs) {
+    def static disjunction(List list) {
+        if (list.isEmpty()) {
+            return false
+        } else {
+            def value = null;
+            for (def element in list) {
+                value = value == null ? element : value | element;
+            }
+            return value
+        }
+    }
+
+    def static compare(GElement lhs, String c, GElement rhs) {
         new GCompare(lhs, c, rhs)
     }
 
-    static def compare(GElement lhs, String c, Number rhs) {
+    def static compare(GElement lhs, String c, Number rhs) {
         compare(lhs, c, new GNumber(rhs));
     }
 

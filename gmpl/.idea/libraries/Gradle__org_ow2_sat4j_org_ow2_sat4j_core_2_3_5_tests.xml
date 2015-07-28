@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: org.ow2.sat4j:org.ow2.sat4j.core:2.3.5:tests">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.ow2.sat4j/org.ow2.sat4j.core/2.3.5/6d229b3927ee278546b15a2350095b46aeb17da9/org.ow2.sat4j.core-2.3.5-tests.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.ow2.sat4j/org.ow2.sat4j.core/2.3.5/279ee4bd993aa15f35543433f2226368c308c302/org.ow2.sat4j.core-2.3.5-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

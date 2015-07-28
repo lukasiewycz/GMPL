@@ -25,6 +25,11 @@ class GCommon {
 					oldMultiply.invoke(delegate, n)
 				}
 			}
+
+			boolean.metaClass.'static'.getAt = { Object i ->
+				println i
+				println i.getClass()
+			}
 		}
 	}
 }

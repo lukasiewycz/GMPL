@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: org.ow2.sat4j:org.ow2.sat4j.pb:2.3.5">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.ow2.sat4j/org.ow2.sat4j.pb/2.3.5/ae46e580753b9d33c21dc2292ea987c34b9b79d7/org.ow2.sat4j.pb-2.3.5.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.ow2.sat4j/org.ow2.sat4j.pb/2.3.5/a4b163f47d74649b03c629332a9954b94bc022bf/org.ow2.sat4j.pb-2.3.5-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

@@ -1,20 +1,19 @@
 package io.github.gmpl.main
 
-import groovy.lang.Closure;
-import java.util.Map;
-
 class GProblem implements GFunctions {
 
 	static {
 		GCommon.init()
 	}
-	
-	def variables = [] as Set
-	def constraints = [] as List<Object>
-	def isinit = false
 
+	def static GProblem defaultProblem = new GProblem();
 
-	
+	def static getDefaultProblem(){
+		return defaultProblem
+	}
+
+	def constraints = [] as List<GElement>
+
 	def clause(GClause clause){
 		constraints.add(clause)
 	}
@@ -24,50 +23,39 @@ class GProblem implements GFunctions {
 	}
 
 	def getConstraints(){
-		initialize()
 		constraints
 	}
 
 	def getVariables(){
-		initialize()
-		variables
+		def variables = [] as Set
+		for(def constraint in getConstraints()){
+			variables += getVariables(constraint)
+		}
+		return variables as List
 	}
 
-	def var(Map map = [:]){
-		String name = map['name']
-		Class type = map['type']
-		List domain = map['domain']
-
-		if(domain == null){
-			new GVariable(name, type);
-		} else {
-			new GVariableDomain(name, type, domain);
+	def getVariables(GElement element){
+		switch(element) {
+			case { it instanceof GVariable }:
+				return [element]
+			case { it instanceof GLiteral}:
+				return getVariables(((GLiteral)element).getVariable())
+			case { it instanceof Iterable}:
+				Iterable iterable = (Iterable)element
+				def result = [] as Set
+				for(def it in iterable){
+					result += getVariables(it)
+				}
+				return result
+			case { it instanceof GCompare}:
+				return getVariables(((GCompare)element).getLhs()) +
+						getVariables(((GCompare)element).getRhs())
+			default:
+				return []
 		}
 	}
-
-	def initialize(){
-		if(!isinit){
-			isinit = true
-			this.properties.collect{
-				if(it.value instanceof GVariableDomain){
-					if(it.value.name == null){
-						it.value.name = it.key
-					}
-				}
-			}
-			
-			this.properties.collect{
-				if(it.value instanceof GVariableDomain){
-					variables += it.value.retrieveAllDefinedVariables()
-				}
-			}
-		}
-	}
-
-
 
 	def add(GProblem problem) {
-		variables += problem.getVariables()
-		constraints += problem.getConstraints()
+		constraints.addAll(problem.getConstraints())
 	}
 }

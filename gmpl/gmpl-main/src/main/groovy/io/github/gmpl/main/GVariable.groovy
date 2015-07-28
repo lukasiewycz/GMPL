@@ -1,5 +1,8 @@
 package io.github.gmpl.main
 
+import groovy.transform.EqualsAndHashCode
+
+@EqualsAndHashCode(excludes=["type","value"])
 class GVariable extends GElement {
 
 	static {
@@ -7,8 +10,9 @@ class GVariable extends GElement {
 	}
 	
 	def name
-	def type
 	def domain
+	def type
+	def value
 	
 	GVariable(GVariableDomain domain, String indices, Class type){
 		this(indices,type)
@@ -35,6 +39,35 @@ class GVariable extends GElement {
 		}
 		
 		new GLiteral(this, false)
+	}
+
+	def asType(Class type){
+		if(value == null){
+			throw new IllegalArgumentException('Value of '+toString()+' is null')
+		}
+
+		switch(type){
+			case boolean:
+			case Boolean.class:
+				return (value as boolean)
+			case int:
+			case Integer.class:
+				return (value as int)
+			case double:
+			case Double.class:
+				return (value as double)
+			case float:
+			case Float.class:
+				return (value as float)
+			case short:
+			case Short.class:
+				return (value as short)
+			case byte:
+			case Byte.class:
+				return (value as byte)
+			default:
+				throw new IllegalArgumentException("Unknown type "+type)
+		}
 	}
 
 }

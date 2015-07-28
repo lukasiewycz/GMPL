@@ -1,29 +1,32 @@
 package io.github.gmpl.main
 
+import groovy.transform.EqualsAndHashCode
+
+@EqualsAndHashCode(excludes=["map"])
 class GVariableDomain {
 	
 	static {
 		GCommon.init()
 	}
 	
-	def name;
-	def type;
-	def domain;
+	def name
+	def domain
+	def type
 	def map = [:]
 	
 	
 	public GVariableDomain(String name, Class type, List domain) {
-		super();
-		this.name = name;
-		this.type = type;
-		this.domain = domain;
+		super()
+		this.name = name
+		this.type = type
+		this.domain = domain
 	}
 	
 	Object getAt(i) {
 		assert i.size() == domain.size()
 		[domain, i].transpose().collect { 
 			if(!it[0].contains(it[1]) && it[1] != '_'){
-				throw new IllegalArgumentException("Illegal argument for domain ${name}, value ${it[1]} is not in domain ${it[0]}");
+				throw new IllegalArgumentException("Illegal argument for domain ${name}, value ${it[1]} is not in domain ${it[0]}")
 			}
 		}
 
