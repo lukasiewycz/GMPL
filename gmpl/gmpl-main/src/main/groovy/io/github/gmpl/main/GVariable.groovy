@@ -65,6 +65,8 @@ class GVariable extends GElement {
 			case byte:
 			case Byte.class:
 				return (value as byte)
+			case GLiteral:
+				return new GLiteral(this, value as boolean)
 			default:
 				throw new IllegalArgumentException("Unknown type "+type)
 		}

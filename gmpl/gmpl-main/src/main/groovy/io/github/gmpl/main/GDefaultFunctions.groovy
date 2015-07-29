@@ -3,9 +3,16 @@ package io.github.gmpl.main
 class GDefaultFunctions {
     static String _ = '_'
 
-    static String SAT4J = 'SAT4J'
+    static GSolverName SAT4J = GSolverName.SAT4J
 
+    static enum GSolverName {
+        SAT4J
+    }
+
+    protected static GProblem problem = new GProblem()
     protected static GSolver solver = null
+
+    static Number infinity = Double.MAX_VALUE
 
     static def var(Map map){
         String name = map['name']
@@ -21,8 +28,14 @@ class GDefaultFunctions {
 
     static def using(String type){
         if(type == SAT4J){
-            solver = new GSolverSAT4J()
-            GProblem problem = GProblem.getDefaultProblem()
+            solver = new GSolverSAT4J();
+            solver.add(problem)
+        }
+    }
+
+    static def solver(GSolverName name){
+        if(name == GSolverName.SAT4J){
+            solver = new GSolverSAT4J();
             solver.add(problem)
         }
     }
@@ -32,17 +45,26 @@ class GDefaultFunctions {
     }
 
     static def clause(GClause clause){
-        GProblem.getDefaultProblem().constraints.add(clause)
+        if(solver == null){
+            problem.addClause(clause)
+        } else {
+            solver.addClause(clause)
+        }
+
     }
 
     static def clause(GElement clause){
         GClause cl = new GClause()
         cl.or(clause)
-        GProblem.getDefaultProblem().constraints.add(cl)
+        GDefaultFunctions.clause(cl)
     }
 
     static def constraint(GCompare compare){
-        GProblem.getDefaultProblem().constraints.add(compare)
+        if(solver == null){
+            problem.addConstraint(compare)
+        } else {
+            solver.addConstraint(compare)
+        }
     }
 
     def static sum(List list) {
@@ -57,16 +79,16 @@ class GDefaultFunctions {
         }
     }
 
-    def static disjunction(List list) {
-        if (list.isEmpty()) {
-            return false
-        } else {
-            def value = null;
-            for (def element in list) {
-                value = value == null ? element : value | element;
-            }
-            return value
+    def static disjunction(Iterable list) {
+        def value = false
+        for (def element in list) {
+            value = value == false ? element : value | element
         }
+        return value
+    }
+
+    def static disjunction(GElement[] list){
+        return disjunction(Arrays.asList(list))
     }
 
     def static compare(GElement lhs, String c, GElement rhs) {

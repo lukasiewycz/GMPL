@@ -38,73 +38,6 @@ class GSolverSAT4J extends GProblem implements GSolver {
 
 		boolean feasible = false;
 
-		for(GVariable variable in getVariables()){
-			int intVar = translate(variable);
-			variablesEnc.put(variable,intVar);
-			variablesDec.put(intVar,variable);
-		}
-
-		println 'size of variables '+variablesEnc.size()
-
-		for(GElement element in getConstraints()){
-			if(element instanceof GCompare){
-				GCompare compare = (GCompare)element;
-
-				PBExpr lhs = new PBExpr();
-
-				GSum sum = (GSum)compare.getLhs();
-				for(GElement term in sum){
-					switch(term){
-						case {it instanceof GVariable}:
-							GVariable variable = (GVariable)term
-							lhs.coeffs.push(toBigInteger(1))
-							lhs.literals.push(variablesEnc.get(term))
-							break;
-						case {it instanceof GLiteral}:
-							GLiteral literal = (GLiteral)term
-							lhs.coeffs.push(toBigInteger(1))
-							lhs.literals.push((literal.getSign()?1:-1) * variablesEnc.get(literal.getVariable()))
-							break;
-						case {it instanceof GProduct}:
-							throw new IllegalArgumentException();
-						default:
-							throw new IllegalArgumentException();
-					}
-				}
-
-				def op = compare.getC()
-				if (op == GCompare.Comparator.EQUAL || op == GCompare.Comparator.GREATEREQUAL) {
-					solver.addPseudoBoolean(lhs.literals, lhs.coeffs, true, 1)
-				}
-				if (op == GCompare.Comparator.EQUAL || op == GCompare.Comparator.LESSEQUAL ) {
-					solver.addPseudoBoolean(lhs.literals, lhs.coeffs, false, 1)
-				}
-
-			} else if(element instanceof GClause){
-				IVecInt cl = new VecInt();
-
-
-				for(GElement term in ((GClause)element)){
-					switch(term) {
-						case {it instanceof GVariable}:
-							GVariable variable = (GVariable) term
-							cl.push(variablesEnc.get(term))
-							break;
-						case {it instanceof GLiteral}:
-							GLiteral literal = (GLiteral) term
-							cl.push((literal.getSign() ? 1 : -1) * variablesEnc.get(literal.getVariable()))
-							break;
-						default:
-							throw new IllegalArgumentException()
-					}
-				}
-				solver.addClause(cl);
-			}
-		}
-
-
-
-
 		PseudoOptDecorator decorator = new PseudoOptDecorator(solver);
 		decorator.newVar(varNum.get());
 		try {
@@ -125,14 +58,91 @@ class GSolverSAT4J extends GProblem implements GSolver {
 		}
 
 		if (!feasible) {
-			return null;
+			return false
 		} else {
 			for(Map.Entry<GVariable,Integer> entry in variablesEnc.entrySet()) {
 				def value = decorator.model(entry.getValue()) ? 1 : 0
 				entry.getKey().setValue(value)
 			}
+			return true
 		}
 
+	}
+
+	def addConstraint(GCompare compare){
+		updateVariables(compare)
+
+		PBExpr lhs = new PBExpr();
+
+		GSum sum = (GSum)compare.getLhs();
+		for(GElement term in sum){
+			switch(term){
+				case {it instanceof GVariable}:
+					GVariable variable = (GVariable)term
+					lhs.coeffs.push(toBigInteger(1))
+					lhs.literals.push(variablesEnc.get(term))
+					break;
+				case {it instanceof GLiteral}:
+					GLiteral literal = (GLiteral)term
+					lhs.coeffs.push(toBigInteger(1))
+					lhs.literals.push((literal.getSign()?1:-1) * variablesEnc.get(literal.getVariable()))
+					break;
+				case {it instanceof GProduct}:
+					throw new IllegalArgumentException();
+				default:
+					throw new IllegalArgumentException();
+			}
+		}
+
+		def op = compare.getC()
+		if (op == GCompare.Comparator.EQUAL || op == GCompare.Comparator.GREATEREQUAL) {
+			solver.addPseudoBoolean(lhs.literals, lhs.coeffs, true, 1)
+		}
+		if (op == GCompare.Comparator.EQUAL || op == GCompare.Comparator.LESSEQUAL ) {
+			solver.addPseudoBoolean(lhs.literals, lhs.coeffs, false, 1)
+		}
+	}
+
+	def addClause(GClause clause){
+		updateVariables(clause)
+
+		IVecInt cl = new VecInt();
+
+		for(GElement term in ((GClause)clause)){
+			switch(term) {
+				case {it instanceof GVariable}:
+					GVariable variable = (GVariable) term
+					cl.push(variablesEnc.get(term))
+					break;
+				case {it instanceof GLiteral}:
+					GLiteral literal = (GLiteral) term
+					cl.push((literal.getSign() ? 1 : -1) * variablesEnc.get(literal.getVariable()))
+					break;
+				default:
+					throw new IllegalArgumentException()
+			}
+		}
+		solver.addClause(cl);
+	}
+
+	def add(GProblem problem){
+		for(GElement element in problem.getConstraints()){
+			if(element instanceof GCompare){
+				addConstraint((GCompare)element)
+			} else if(element instanceof GClause){
+				addClause((GClause)element)
+			}
+		}
+	}
+
+	protected void updateVariables(GElement element){
+		for(GVariable variable in GProblem.getVariables(element)){
+			if(!variablesEnc.containsKey(variable)) {
+				int intVar = translate(variable)
+				variablesEnc.put(variable,intVar)
+				variablesDec.put(intVar,variable)
+			}
+		}
 	}
 
 	protected AtomicInteger var = new AtomicInteger(1);

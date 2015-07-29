@@ -1,11 +1,25 @@
 package io.github.gmpl.main
 
+import org.codehaus.groovy.control.CompilerConfiguration
+
 /**
  * Created by martin.lukasiewycz on 28/7/2015.
  */
 /*for(GVariable var in queensProblem.x[_,_]){
     println '' + var + ' ' + (var as double)
 }*/
+import org.codehaus.groovy.control.customizers.ImportCustomizer
+
+def importCustomizer = new ImportCustomizer()
+importCustomizer.addStaticStars 'io.github.gmpl.main.GDefaultFunctions'
+
+def configuration = new CompilerConfiguration()
+configuration.addCompilationCustomizers(importCustomizer)
+
+// Create shell and execute script.
+def shell = new GroovyShell(configuration)
+shell.evaluate new File('Test.groovy')
+
 
 //queensProblem.constraint(compare(sum(j: 1..8, {j -> queensProblem.x[2, j]}),'==',1))
 /*println queensProblem.getVariables()

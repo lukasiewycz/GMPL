@@ -6,20 +6,22 @@ class GProblem implements GFunctions {
 		GCommon.init()
 	}
 
-	def static GProblem defaultProblem = new GProblem();
-
-	def static getDefaultProblem(){
-		return defaultProblem
-	}
-
 	def constraints = [] as List<GElement>
 
 	def clause(GClause clause){
+		addClause(clause)
+	}
+
+	def addClause(GClause clause){
 		constraints.add(clause)
 	}
 
-	def constraint(GCompare compare){
+	def addConstraint(GCompare compare){
 		constraints.add(compare)
+	}
+
+	def constraint(GCompare compare){
+		addConstraint(compare)
 	}
 
 	def getConstraints(){
@@ -34,7 +36,7 @@ class GProblem implements GFunctions {
 		return variables as List
 	}
 
-	def getVariables(GElement element){
+	static def getVariables(GElement element){
 		switch(element) {
 			case { it instanceof GVariable }:
 				return [element]
@@ -59,7 +61,4 @@ class GProblem implements GFunctions {
 		constraints.addAll(problem.getConstraints())
 	}
 
-	static def testStaticMethod(){
-		println 'test successful'
-	}
 }
