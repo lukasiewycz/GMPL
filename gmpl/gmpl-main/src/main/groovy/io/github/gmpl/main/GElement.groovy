@@ -1,6 +1,6 @@
 package io.github.gmpl.main
 
-class GElement {
+abstract class GElement {
 	
 	GElement plus(GElement other) {
 		//println "plus $this $other"
@@ -35,5 +35,5 @@ class GElement {
 	GElement or(GElement other){
 		new GClause(this, other);
 	}
-	
+
 }

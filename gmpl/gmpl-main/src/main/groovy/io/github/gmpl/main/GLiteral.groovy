@@ -24,6 +24,14 @@ class GLiteral extends GElement {
 		new GLiteral(variable, !sign);
 	}
 
+	public boolean isPositive(){
+		return sign
+	}
+
+	public boolean isNegative(){
+		return !sign
+	}
+
 	String toString() {
 		(!sign?"~":"")+variable
 	}

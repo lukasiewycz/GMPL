@@ -13,7 +13,7 @@ class GVariable extends GElement {
 	def domain
 	def type
 	def value
-	
+
 	GVariable(GVariableDomain domain, String indices, Class type){
 		this(indices,type)
 		this.domain = domain
@@ -31,6 +31,10 @@ class GVariable extends GElement {
 		} else {
 			name
 		}
+	}
+
+	GLiteral toPositiveLiteral(){
+		return new GLiteral(this, true)
 	}
 	
 	def bitwiseNegate(){

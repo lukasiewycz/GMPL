@@ -11,14 +11,15 @@ import org.sat4j.specs.IVec
 import org.sat4j.specs.IVecInt
 import org.sat4j.specs.TimeoutException
 
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 class GSolverSAT4J extends GProblem implements GSolver {
-	
+
 	def static newInstance(){
 		new GSolverSAT4J();
 	}
-	
+
 
 	protected final PBSolverResolution solver;
 	protected int timeout = 3600 * 24;
@@ -72,36 +73,50 @@ class GSolverSAT4J extends GProblem implements GSolver {
 	def addConstraint(GCompare compare){
 		updateVariables(compare)
 
-		PBExpr lhs = new PBExpr();
+		try {
+			GLinear linear = GLinear.convert(compare.getLhs())
+			linear.addAll(GLinear.convert(compare.getRhs()).invert())
 
-		GSum sum = (GSum)compare.getLhs();
-		for(GElement term in sum){
-			switch(term){
-				case {it instanceof GVariable}:
-					GVariable variable = (GVariable)term
-					lhs.coeffs.push(toBigInteger(1))
-					lhs.literals.push(variablesEnc.get(term))
-					break;
-				case {it instanceof GLiteral}:
-					GLiteral literal = (GLiteral)term
-					lhs.coeffs.push(toBigInteger(1))
-					lhs.literals.push((literal.getSign()?1:-1) * variablesEnc.get(literal.getVariable()))
-					break;
-				case {it instanceof GProduct}:
-					throw new IllegalArgumentException();
-				default:
-					throw new IllegalArgumentException();
+			int constant = 0
+			Map<GVariable,Integer> map = new HashMap<>()
+
+			for(GLinear.GLinearTerm term in linear){
+				if(term.isConstant()) {
+					constant += term.getCoefficient()
+				} else {
+					GVariable variable = term.getLiteral().getVariable()
+					if(!map.containsKey(variable)){
+						map.put(variable,0);
+					}
+					if(term.getLiteral().isPositive()){
+						map.put(variable, map.get(variable)+term.getCoefficient())
+					} else {
+						constant += term.getCoefficient()
+						map.put(variable, map.get(variable)-term.getCoefficient())
+					}
+				}
 			}
-		}
 
-		def op = compare.getC()
-		if (op == GCompare.Comparator.EQUAL || op == GCompare.Comparator.GREATEREQUAL) {
-			solver.addPseudoBoolean(lhs.literals, lhs.coeffs, true, 1)
-		}
-		if (op == GCompare.Comparator.EQUAL || op == GCompare.Comparator.LESSEQUAL ) {
-			solver.addPseudoBoolean(lhs.literals, lhs.coeffs, false, 1)
+			PBExpr pbexpr = new PBExpr();
+			for(Map.Entry<GVariable,Integer> entry in map){
+				pbexpr.literals.push(variablesEnc.get(entry.getKey()))
+				pbexpr.coeffs.push(new BigInteger(entry.getValue()))
+			}
+
+			def op = compare.getC()
+			if (op == GCompare.Comparator.EQUAL || op == GCompare.Comparator.GREATEREQUAL) {
+				solver.addPseudoBoolean(pbexpr.literals, pbexpr.coeffs, true, -constant)
+			}
+			if (op == GCompare.Comparator.EQUAL || op == GCompare.Comparator.LESSEQUAL ) {
+				solver.addPseudoBoolean(pbexpr.literals, pbexpr.coeffs, false, -constant)
+			}
+
+		} catch(IllegalArgumentException e){
+			throw new IllegalArgumentException('Constraint '+compare+' is not linear', e)
 		}
 	}
+
+
 
 	def addClause(GClause clause){
 		updateVariables(clause)
@@ -168,7 +183,7 @@ class GSolverSAT4J extends GProblem implements GSolver {
 		BigInteger bi = new BigInteger("" + value);
 		return bi;
 	}
-	
+
 	public GVariable getVar(GVariable var0){
 		for(GVariable var1 in variablesEnc.keySet()){
 			if(var1 == var0){
