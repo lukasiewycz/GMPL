@@ -97,6 +97,8 @@ class GSolverSAT4J extends GProblem implements GSolver {
 				}
 			}
 
+			//println ''+map+' '+constant
+
 			PBExpr pbexpr = new PBExpr();
 			for(Map.Entry<GVariable,Integer> entry in map){
 				pbexpr.literals.push(variablesEnc.get(entry.getKey()))

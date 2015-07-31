@@ -22,6 +22,11 @@ class GSum extends GElement implements Iterable {
 		elements.add(other)
 		this
 	}
+
+	GElement minus(GElement other) {
+		elements.add(other*-1)
+		this
+	}
 	
 	GElement plus(Number other){
 		elements += new GNumber(other);

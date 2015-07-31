@@ -73,7 +73,7 @@ class GLinear implements Iterable<GLinearTerm> {
 
                 for(GElement factor in product){
                     if(factor instanceof GNumber){
-                        coefficient *= (GNumber)factor.getValue();
+                        coefficient *= ((GNumber)factor).getValue();
                     } else if(factor instanceof GVariable || factor instanceof GLiteral){
                         if(literal != null){
                             throw new IllegalArgumentException("Element "+element+" is not linear for term "+product);
@@ -84,7 +84,7 @@ class GLinear implements Iterable<GLinearTerm> {
                         }
                     }
                 }
-                return new GLinearTerm(isInteger(double)?coefficient.intValue():coefficient, literal);
+                return new GLinearTerm(isInteger(coefficient)?coefficient.intValue():coefficient, literal);
         }
     }
 
