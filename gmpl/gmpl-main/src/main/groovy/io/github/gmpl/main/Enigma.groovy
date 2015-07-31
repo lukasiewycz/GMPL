@@ -31,6 +31,12 @@ def String prev(String a){
         return ''+(char)(((((int)a.charAt(0))-base+(26-1))%26)+base)
 }
 
+def int getOffset(String wires, String i){
+        int input = ((int)i)-((int)'a')
+        int output = ((int)wires.charAt(input))-((int)'a')
+        return (output - input + 26) % 26
+}
+
 def alpha = 'abcdefghijklmnopqrstuvwxyz'
 
 def rotors = [
@@ -160,7 +166,9 @@ for (t in (0..T)){
 
                 }
         }
-
-
-
 }
+
+println getOffset(rotors['I'].wires, 's')
+println getOffset(rotors['I'].wires, 't')
+println getOffset(rotors['I'].wires, 'u')
+println getOffset(rotors['II'].wires, 'f')
