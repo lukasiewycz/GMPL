@@ -49,22 +49,26 @@ def String subtract(String a, int b){
 
 def alpha = 'abcdefghijklmnopqrstuvwxyz'
 
+def etw = 'jwulcmnohpqzyxiradkegvbtsf'
+
 def rotors = [
-        I:      [wires: 'ekmflgdqvzntowyhxuspaibrcj', notch: 'q'],
-        II:     [wires: 'ajdksiruxblhwtmcqgznpyfvoe', notch: 'e'],
-        III:    [wires: 'bdfhjlcprtxvznyeiwgakmusqo', notch: 'v']
+        '1D':     [wires: 'kdcwrlsmfuypbivqjnxztegaoh', notch: 'y'],
+        '2D':     [wires: 'slvgbtfxjqohewirzyamkpcndu', notch: 'e'],
+        '3D':     [wires: 'cjgdpshkturawzxfmynqobvlie', notch: 'n']
 ]
 def rotortypes = rotors.keySet()
 def rotorslots = (1..3)
 def rotorsignals = (0..3)
 
 def reflectors = [
-        B:      [wires: 'yruhqsldpxngokmiebfzcwvjat'],
-        C:      [wires: 'fvpjiaoyedrzxwgctkuqsbnmhl']
+        'u$':      [wires: 'imetcgfraysqbzxwlhkdvupojn']
 ]
 
+def reflectorAdjustable = false
+
+
 def strInput  = 'wetterbericht'
-def strOutput = 'vwcmznncymnkk'
+def strOutput = 'zczsvjmjsdedg'
 def T = strInput.length()
 
 def xr = var name: 'xr', type: boolean, domain: [rotors.keySet(),'a'..'z',0..T] // rotor position as time
@@ -74,7 +78,8 @@ def xs = var name: 'xs', type: boolean, domain: [rotors.keySet(), rotorslots] //
 def xm = var name: 'xm', type: boolean, domain: [rotorslots,0..T] // move rotor yes/no
 def is = var name: 'is', type: boolean, domain: [rotorsignals, 'a'..'z', 1..T]
 def io = var name: 'io', type: boolean, domain: ['a'..'z', 1..T]
-def yr = var name: 'yr', type: boolean, domain: [reflectors.keySet()]
+def yr = var name: 'yr', type: boolean, domain: [reflectors.keySet()] // used reflector
+def yp = var name: 'yp', type: boolean, domain: ['a'..'z'] // reflector position
 
 solver SAT4J
 
@@ -134,6 +139,12 @@ for(r in rotors.keySet()) for(t in 0..T-1) for(p in 'a'..'z') for(s in rotorslot
 // choose exactly one refelector
 constraint compare(sum(yr[_]),'==',1)
 
+// choose exactly one reflector position
+constraint compare(sum(yp[_]),'==',1)
+
+if(!reflectorAdjustable){
+        clause yp['a']
+}
 
 
 for(s in rotorsignals) for(t in 1..T) {
@@ -141,7 +152,8 @@ for(s in rotorsignals) for(t in 1..T) {
 }
 
 for(l in 'a'..'z') for(t in 1..T) {
-        constraint compare(io[l,t]-is[0,l,t],'==',0)
+        def m = getOutput(etw, l)
+        constraint compare(io[l,t]-is[0,m,t],'==',0)
 }
 
 // define routing with getOffset(..) and
@@ -162,9 +174,12 @@ for(s in rotorslots) for(r in rotors.keySet()) for(p in 'a'..'z') for(t in 1..T)
         clause ~xs[r,s] | ~xq[r,p,t] | is[s-1,inputOnGrid,t] | ~is[s,outputOnGrid,t]
 }
 
-for(f in reflectors.keySet()) for(p in 'a'..'z') for(t in 1..T) {
-        def q = getOutput(reflectors[f].wires,p)
-        clause ~yr[f] | ~is[rotorsignals.last(),p,t] | is[rotorsignals.last(),q,t]
+for(f in reflectors.keySet()) for(p in 'a'..'z') for(input in 'a'..'z') for(t in 1..T) {
+        def inputOnGrid = input
+        def inputOnReflector = add(input,p)
+        def outputOnReflector = getOutput(reflectors[f].wires, inputOnReflector)
+        def outputOnGrid = subtract(outputOnReflector,p)
+        clause ~yr[f] | ~yp[p] | ~is[rotorsignals.last(),inputOnGrid,t] | is[rotorsignals.last(),outputOnGrid,t]
 }
 
 
@@ -181,17 +196,18 @@ for(int i=0; i<strInput.length();i++){
 
 
 
-//clause xr['I','r',0]
-//clause xr['II','e',0]
-//clause xr['III','a',0]
-clause xs['I',1]
-clause xs['II',2]
-clause xs['III',3]
-//clause xp['I',5]
-//clause xp['II',5]
-//clause xp['III',5]
+/*clause xr['1D','a',0]
+clause xr['2D','a',0]
+clause xr['3D','a',0]
+clause xs['1D',1]
+clause xs['2D',2]
+clause xs['3D',3]
+clause xp['1D',1]
+clause xp['3D',1]
+clause xp['2D',1]
 
-clause yr['B']
+clause yr['u$']
+clause yp['a']*/
 
 println 'Build all constraints'
 
@@ -226,13 +242,12 @@ for (s in rotorslots) for(r in rotors.keySet()){
                 for(sh in 1..26){
                         if(xp[r,sh] as boolean) print "($sh)"
                 }
-
         }
 }
 for (f in reflectors.keySet()){
         if(yr[f] as boolean) print  '\t\t' + f
+        for(p in 'a'..'z') if(yp[p] as boolean) println "($p)"
 }
-println ''
 
 for (t in (0..T)){
         print "${t}\t\t"
@@ -251,7 +266,7 @@ for (t in (0..T)){
         //for(r in rotors.keySet()) { print ''+(xm[r,t] as int)+'\t' }
         println ''
 
-        /*if(t > 0) {
+        if(t > 0) {
                 for (s in 'a'..'z') {
                         print "${s}\t"
                         for (p in rotorsignals) {
@@ -260,7 +275,7 @@ for (t in (0..T)){
                         println ''
 
                 }
-        }*/
+        }
 }
 
 println 'result string: '
