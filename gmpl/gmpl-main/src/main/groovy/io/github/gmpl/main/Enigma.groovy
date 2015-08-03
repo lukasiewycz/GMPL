@@ -184,14 +184,14 @@ for(int i=0; i<strInput.length();i++){
 //clause xr['I','r',0]
 //clause xr['II','e',0]
 //clause xr['III','a',0]
-//clause xs['I',1]
-//clause xs['II',2]
-//clause xs['III',3]
+clause xs['I',1]
+clause xs['II',2]
+clause xs['III',3]
 //clause xp['I',5]
 //clause xp['II',5]
 //clause xp['III',5]
 
-//clause yr['B']
+clause yr['B']
 
 println 'Build all constraints'
 
@@ -200,6 +200,23 @@ def counter = 0
 while(solve()){
         counter++;
         println 'solved '+counter
+        def list = xs[_,_] + yr[_]
+        for(r in rotors.keySet()) if(disjunction(xs[r,_] as GLiteral[]) as boolean) {
+                // smart approach that detects symmetries
+                int slot = 0
+                for(s in rotorslots) if(xs[r,s] as boolean) {
+                        slot = s
+                }
+                for(p in 'a'..'z') if(xq[r,p,1] as boolean) list << xq[r,p,1]
+                for(t in 1..T-1) list << xm[slot,t]
+
+                // silly approach:
+                //for(p in 'a'..'z') if(xr[r,p,0] as boolean) list << xr[r,p,0]
+                //for(sh in 1..26) if(xp[r,sh] as boolean)  list << xp[r,sh]
+        }
+        println list as GLiteral[]
+
+        clause disjunction(~(list as GLiteral[]))
 }
 
 
@@ -234,7 +251,7 @@ for (t in (0..T)){
         //for(r in rotors.keySet()) { print ''+(xm[r,t] as int)+'\t' }
         println ''
 
-        if(t > 0) {
+        /*if(t > 0) {
                 for (s in 'a'..'z') {
                         print "${s}\t"
                         for (p in rotorsignals) {
@@ -243,7 +260,7 @@ for (t in (0..T)){
                         println ''
 
                 }
-        }
+        }*/
 }
 
 println 'result string: '

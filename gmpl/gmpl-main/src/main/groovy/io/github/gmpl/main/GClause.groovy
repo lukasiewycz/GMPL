@@ -22,5 +22,15 @@ class GClause extends GElement implements Iterable {
 		elements.add(other)
 		this
 	}
+
+	def asType(Class type){
+		boolean result = false
+
+		for(e in elements){
+			result = result | (e as boolean)
+		}
+
+		return result.asType(type)
+	}
 	
 }
