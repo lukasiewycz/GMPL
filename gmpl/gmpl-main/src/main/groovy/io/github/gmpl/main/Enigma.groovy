@@ -4,23 +4,6 @@ import static io.github.gmpl.main.GDefaultFunctions.*
 
 // https://people.physik.hu-berlin.de/~palloks/js/enigma/enigma-u_v20_en.html
 
-/*
-NS.Extend(NS, {
-        alpha: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-        mRotors: {
-                I: {wires: "EKMFLGDQVZNTOWYHXUSPAIBRCJ", notch: 'Q'},
-                II: {wires: "AJDKSIRUXBLHWTMCQGZNPYFVOE", notch: 'E'},
-                III: {wires: "BDFHJLCPRTXVZNYEIWGAKMUSQO", notch: 'V'},
-                IV: {wires: "ESOVPZJAYQUIRHXLNFTGKDCMWB", notch: 'J'},
-                V: {wires: "VZBRGITYUPSDNHLXAWMJQOFECK", notch: 'Z'}
-                },
-
-        mReflectors: {
-        B: {wires: "YRUHQSLDPXNGOKMIEBFZCWVJAT"},
-        C: {wires: "FVPJIAOYEDRZXWGCTKUQSBNMHL"}
-        },
- */
-
 def String next(String a){
         int base = ((int) ('a'))
         return ''+(char)(((((int)a.charAt(0))-base+1)%26)+base)
@@ -35,6 +18,33 @@ def int getOffset(String wires, String i){
         int input = ((int)i)-((int)'a')
         int output = ((int)wires.charAt(input))-((int)'a')
         return (output - input + 26) % 26
+}
+
+def String getOutput(String wires, String i){
+        int input = ((int)i)-((int)'a')
+        return ((char)wires.charAt(input)) as String
+}
+
+def String add(String a, String b){
+        int aint = ((int)a)-((int)'a')
+        int bint = ((int)b)-((int)'a')
+        return (char)(((aint+bint)%26)+(int)'a')
+}
+
+def String add(String a, int b){
+        int aint = ((int)a)-((int)'a')
+        return (char)(((aint+(b-1))%26)+(int)'a')
+}
+
+def String subtract(String a, String b){
+        int aint = ((int)a)-((int)'a')
+        int bint = ((int)b)-((int)'a')
+        return (char)(((aint-bint+26)%26)+(int)'a')
+}
+
+def String subtract(String a, int b){
+        int aint = ((int)a)-((int)'a')
+        return (char)(((aint-(b-1)+26)%26)+(int)'a')
 }
 
 def alpha = 'abcdefghijklmnopqrstuvwxyz'
@@ -53,15 +63,18 @@ def reflectors = [
         C:      [wires: 'fvpjiaoyedrzxwgctkuqsbnmhl']
 ]
 
-def str = 'wetterbericht'
-def T = str.length()
+def strInput  = 'wetterbericht'
+def strOutput = 'vwcmznncymnkk'
+def T = strInput.length()
 
 def xr = var name: 'xr', type: boolean, domain: [rotors.keySet(),'a'..'z',0..T] // rotor position as time
-def xp = var name: 'xp', type: boolean, domain: [rotors.keySet(),'a'..'z'] // ring position
+def xq = var name: 'xq', type: boolean, domain: [rotors.keySet(),'a'..'z',1..T] // rotor position with ring adjustment
+def xp = var name: 'xp', type: boolean, domain: [rotors.keySet(),1..26] // ring position
 def xs = var name: 'xs', type: boolean, domain: [rotors.keySet(), rotorslots] // rotor to slot assignment
 def xm = var name: 'xm', type: boolean, domain: [rotorslots,0..T] // move rotor yes/no
 def is = var name: 'is', type: boolean, domain: [rotorsignals, 'a'..'z', 1..T]
 def io = var name: 'io', type: boolean, domain: ['a'..'z', 1..T]
+def yr = var name: 'yr', type: boolean, domain: [reflectors.keySet()]
 
 solver SAT4J
 
@@ -100,8 +113,14 @@ for(t in 0..T) for (r0 in rotors.keySet()) for (r1 in rotors.keySet()) for (p0 i
 }
 
 // rotor in exactly one position
-for(r in rotors.keySet()) for(t in 0..T){
-        constraint compare(sum(xr[r,_,t]),'==',1)
+for(r in rotors.keySet()) for(t in 0..T) {
+        constraint compare(sum(xr[r, _, t]), '==', 1)
+}
+for(r in rotors.keySet()) for(t in 1..T) {
+        constraint compare(sum(xq[r,_,t]),'==',1)
+}
+for(r in rotors.keySet()) for(sh in 1..26) {
+        constraint compare(sum(xp[r,_]),'==',1)
 }
 
 // move rotor to next position
@@ -112,6 +131,11 @@ for(r in rotors.keySet()) for(t in 0..T-1) for(p in 'a'..'z') for(s in rotorslot
         //constraint compare(xr[r,s,t] + xm[r,t] - xr[r,next(s),t+1],'<=',1)
 }
 
+// choose exactly one refelector
+constraint compare(sum(yr[_]),'==',1)
+
+
+
 for(s in rotorsignals) for(t in 1..T) {
         constraint compare(sum(is[s,_,t]),'==',2)
 }
@@ -120,36 +144,90 @@ for(l in 'a'..'z') for(t in 1..T) {
         constraint compare(io[l,t]-is[0,l,t],'==',0)
 }
 
+// define routing with getOffset(..) and
+// https://people.physik.hu-berlin.de/~palloks/js/enigma/enigma-u_v20_en.html
+for(r in rotors.keySet()) for(p in 'a'..'z') for(sh in 1..26) for(t in 1..T) {
+        clause ~xr[r,p,t] | ~xp[r,sh] | xq[r,subtract(p,sh),t]
+        clause xr[r,p,t] | ~xp[r,sh] | ~xq[r,subtract(p,sh),t]
+}
+
+
+for(s in rotorslots) for(r in rotors.keySet()) for(p in 'a'..'z') for(t in 1..T) for(input in 'a'..'z') {
+        def inputOnGrid = input
+        def inputOnRing = add(input,p)
+        def outputOnRing = getOutput(rotors[r].wires, inputOnRing)
+        def outputOnGrid = subtract(outputOnRing,p)
+
+        clause ~xs[r,s] | ~xq[r,p,t] | ~is[s-1,inputOnGrid,t] | is[s,outputOnGrid,t]
+        clause ~xs[r,s] | ~xq[r,p,t] | is[s-1,inputOnGrid,t] | ~is[s,outputOnGrid,t]
+}
+
+for(f in reflectors.keySet()) for(p in 'a'..'z') for(t in 1..T) {
+        def q = getOutput(reflectors[f].wires,p)
+        clause ~yr[f] | ~is[rotorsignals.last(),p,t] | is[rotorsignals.last(),q,t]
+}
+
+
+
+
+
 // set input
-for(int i=0; i<str.length();i++){
-        def s = str.substring(i,i+1)
+for(int i=0; i<strInput.length();i++){
+        def s = strInput.substring(i,i+1)
         clause io[s,i+1]
+        def o = strOutput.substring(i,i+1)
+        clause io[o,i+1]
 }
 
 
-rotorInit = [
-        I:      'r',
-        II:     'e',
-        III:    'a'
-]
 
-for(r in rotors.keySet()) {
-        clause xr[r,rotorInit[r],0]
+//clause xr['I','r',0]
+//clause xr['II','e',0]
+//clause xr['III','a',0]
+//clause xs['I',1]
+//clause xs['II',2]
+//clause xs['III',3]
+//clause xp['I',5]
+//clause xp['II',5]
+//clause xp['III',5]
+
+//clause yr['B']
+
+println 'Build all constraints'
+
+def counter = 0
+
+while(solve()){
+        counter++;
+        println 'solved '+counter
 }
-clause xs['I',1]
-clause xs['II',2]
-clause xs['III',3]
 
-println solve()
 
 for (s in rotorslots) for(r in rotors.keySet()){
-        if(xs[r,s] as boolean) print  '\t' + r
+        if(xs[r,s] as boolean) {
+                print  '\t\t' + r
+                for(sh in 1..26){
+                        if(xp[r,sh] as boolean) print "($sh)"
+                }
+
+        }
+}
+for (f in reflectors.keySet()){
+        if(yr[f] as boolean) print  '\t\t' + f
 }
 println ''
 
 for (t in (0..T)){
         print "${t}\t\t"
-        for(r in rotors.keySet()) for(s in ('a'..'z')) { if (xr[r,s,t] as boolean) print s + '\t\t' }
+        for(r in rotors.keySet()) for(s in ('a'..'z')) {
+                if (xr[r,s,t] as boolean){
+                        print s
+                        if(t>0) {
+                                for (p in ('a'..'z')) if (xq[r, p, t] as boolean) print "($p)"
+                        }
+                        print '\t\t'
+                }
+        }
         print '\t'
         for(s in rotorslots) { print ''+(xm[s,t] as int)+'\t' }
 
@@ -168,7 +246,8 @@ for (t in (0..T)){
         }
 }
 
-println getOffset(rotors['I'].wires, 's')
-println getOffset(rotors['I'].wires, 't')
-println getOffset(rotors['I'].wires, 'u')
-println getOffset(rotors['II'].wires, 'f')
+println 'result string: '
+for(t in 1..T) for(l in 'a'..'z') {
+        if(io[l,t] as boolean && strInput[t-1] != l) print l
+}
+println ''

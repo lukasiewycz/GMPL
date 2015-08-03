@@ -21,14 +21,28 @@ class GVariableDomain {
 		this.type = type
 		this.domain = domain
 	}
+
+	Object getAt(String str){
+		getAtInternal(str)
+	}
 	
 	Object getAt(i) {
+		getAtInternal(i)
+	}
+
+	private getAtInternal(i){
+		if(!(i instanceof Collection)){
+			List l = new ArrayList()
+			l.add(i)
+			i = l
+		}
+
 		assert i.size() == domain.size()
 		List key = new ArrayList(i)
 
-		[domain, i].transpose().collect { 
+		[domain, i].transpose().collect {
 			if(!it[0].contains(it[1]) && it[1] != '_'){
-				throw new IllegalArgumentException("Illegal argument for domain ${name}, value ${it[1]} is not in domain ${it[0]}")
+				throw new IllegalArgumentException("Illegal argument for domain ${name} with input $i, value ${it[1]} is not in domain ${it[0]}")
 			}
 		}
 

@@ -20,6 +20,8 @@ class GSolverSAT4J extends GProblem implements GSolver {
 		new GSolverSAT4J();
 	}
 
+	protected int nConstraints = 0;
+
 
 	protected final PBSolverResolution solver;
 	protected int timeout = 3600 * 24;
@@ -36,6 +38,7 @@ class GSolverSAT4J extends GProblem implements GSolver {
 
 	def solve() {
 		solver.setTimeout(timeout);
+		println 'Number of constraints '+nConstraints
 
 		boolean feasible = false;
 
@@ -67,11 +70,11 @@ class GSolverSAT4J extends GProblem implements GSolver {
 			}
 			return true
 		}
-
 	}
 
 	def addConstraint(GCompare compare){
 		updateVariables(compare)
+		nConstraints++
 
 		try {
 			GLinear linear = GLinear.convert(compare.getLhs())
@@ -122,6 +125,7 @@ class GSolverSAT4J extends GProblem implements GSolver {
 
 	def addClause(GClause clause){
 		updateVariables(clause)
+		nConstraints++
 
 		IVecInt cl = new VecInt();
 
